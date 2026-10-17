@@ -1,0 +1,12 @@
+.DS_Store
+.impeccable/review/
+.impeccable/mocks/
+node_modules/
+*.log
+__pycache__/
+
+# Local design history and generated review evidence
+.impeccable/
+PRODUCT.md
+DESIGN.md
+*.source.png
