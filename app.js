@@ -37,7 +37,7 @@ form?.querySelector('.clear-selection')?.addEventListener('click', () => {
 });
 const query = new URLSearchParams(window.location.search);
 const palette = query.get('palette');
-if (['black', 'sand', 'navy', 'petrol', 'ember', 'olive'].includes(palette)) {
+if (['black', 'sand', 'navy'].includes(palette)) {
   document.querySelectorAll('a[href]').forEach(link => {
     const href = link.getAttribute('href');
     if (!href || href.startsWith('#')) return;
@@ -79,8 +79,8 @@ document.querySelectorAll('.cadence-controls').forEach(group => {
 });
 
 const scheduleValues = {
-  morning: {title:'Утро · 9:00–13:30',description:'Первая половина дня для языка. 4 часа занятий и 30 минут перерыва.',selection:'Утро, 9:00–13:30'},
-  evening: {title:'Вечер · 17:30–22:00',description:'Вечернее погружение в практику. 4 часа занятий и 30 минут перерыва.',selection:'Вечер, 17:30–22:00'}
+  morning: {title:'Утро · 9:00–13:30',description:'Первая половина дня для языка — 4 часа занятий и 30 минут перерыва',selection:'Утро, 9:00–13:30'},
+  evening: {title:'Вечер · 17:30–22:00',description:'Вечернее погружение в практику — 4 часа занятий и 30 минут перерыва',selection:'Вечер, 17:30–22:00'}
 };
 function updateSchedule(key, updateUrl = true) {
   const value = Object.hasOwn(scheduleValues,key) ? scheduleValues[key] : null;
