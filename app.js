@@ -151,9 +151,10 @@ form?.querySelector('.form-reset')?.addEventListener('click', () => {
 });
 
 // The language tabs filter programs; they do not assess the visitor.
-document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
-  document.querySelectorAll('[data-filter]').forEach(item => item.setAttribute('aria-pressed',String(item===button)));
+document.querySelectorAll('.filter-button[data-filter]').forEach(button => button.addEventListener('click', () => {
+  document.querySelectorAll('.filter-button[data-filter]').forEach(item => item.setAttribute('aria-pressed',String(item===button)));
   document.querySelectorAll('[data-region]').forEach(card => { card.hidden = button.dataset.filter !== 'all' && card.dataset.region !== button.dataset.filter; });
+  document.querySelectorAll('.language-grid').forEach(grid => { grid.dataset.activeFilter = button.dataset.filter; });
 }));
 const pageLinks = Array.from(document.querySelectorAll('.page-nav a'));
 if (pageLinks.length && 'IntersectionObserver' in window) {
