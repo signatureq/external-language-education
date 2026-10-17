@@ -36,7 +36,8 @@ form?.querySelector('.clear-selection')?.addEventListener('click', () => {
   renderSelection();
 });
 const query = new URLSearchParams(window.location.search);
-const palette = query.get('palette');
+const paletteFromUrl = query.get('palette');
+const palette = ['black', 'sand', 'navy'].includes(paletteFromUrl) ? paletteFromUrl : 'sand';
 if (['black', 'sand', 'navy'].includes(palette)) {
   document.querySelectorAll('a[href]').forEach(link => {
     const href = link.getAttribute('href');
