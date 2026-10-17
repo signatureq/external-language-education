@@ -6,6 +6,7 @@ from hashlib import sha256
 
 ROOT = Path(__file__).resolve().parent
 STYLE_VERSION = sha256((ROOT / 'styles.css').read_bytes()).hexdigest()[:10]
+PALETTE_VERSION = sha256((ROOT / 'palette-light.css').read_bytes()).hexdigest()[:10]
 SCRIPT_VERSION = sha256((ROOT / 'app.js').read_bytes()).hexdigest()[:10]
 LANGUAGES = json.loads((ROOT / 'content.json').read_text())
 PHOTO = 'assets/photos/blue/'
@@ -149,6 +150,6 @@ for l in LANGUAGES:
 
 for filename,page in pages.items():
     title=escape(page['title'])
-    html=f'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title} — External Language Education</title><meta name="description" content="{title}. Иностранные языки экстерном в Москве. 4 часа в день, 4 дня в неделю, группы до 8 человек."><meta name="theme-color" content="#241f26"><meta name="robots" content="noindex,nofollow"><link rel="icon" type="image/svg+xml" href="assets/favicon.svg"><link rel="preload" href="assets/fonts/body-normal-400.ttf" as="font" type="font/ttf" crossorigin><link rel="preload" href="assets/fonts/body-normal-600.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="styles.css?v={STYLE_VERSION}"><script defer src="app.js?v={SCRIPT_VERSION}"></script></head><body class="page-{filename[:-5]}">{header(filename)}<main id="main">{page['content']}{application(page.get('language'))}</main>{footer()}</body></html>'''
+    html=f'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title} — External Language Education</title><meta name="description" content="{title}. Иностранные языки экстерном в Москве. 4 часа в день, 4 дня в неделю, группы до 8 человек."><meta name="theme-color" content="#111111"><meta name="robots" content="noindex,nofollow"><link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=neutral"><link rel="preload" href="assets/fonts/body-normal-400.ttf" as="font" type="font/ttf" crossorigin><link rel="preload" href="assets/fonts/body-normal-600.ttf" as="font" type="font/ttf" crossorigin><script>if(new URLSearchParams(location.search).get("palette")==="light"){{document.documentElement.dataset.palette="light";document.querySelector('meta[name="theme-color"]').content="#ffffff"}}</script><link rel="stylesheet" href="styles.css?v={STYLE_VERSION}"><link rel="stylesheet" href="palette-light.css?v={PALETTE_VERSION}"><script defer src="app.js?v={SCRIPT_VERSION}"></script></head><body class="page-{filename[:-5]}">{header(filename)}<main id="main">{page['content']}{application(page.get('language'))}</main>{footer()}</body></html>'''
     (ROOT/filename).write_text(html.replace('<br>', ' <br>'))
 print(f'Built {len(pages)} pages.')

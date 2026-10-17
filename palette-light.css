@@ -1,0 +1,50 @@
+/* Alternative light palette: keep photography and component geometry intact. */
+html[data-palette="light"] {
+  --ground: #ffffff;
+  --ink: #191919;
+  --muted: #626262;
+  --accent: #191919;
+  --accent-hover: #383838;
+  --button-ink: #ffffff;
+  --focus: #666666;
+  --selection-bg: #191919;
+  --selection-ink: #ffffff;
+  --deep: #191919;
+  --surface: #f2f2f2;
+  --panel: #ededed;
+  --line: #cecece;
+  color-scheme: light;
+}
+html[data-palette="light"] ::selection { background: var(--selection-bg); color: var(--selection-ink); }
+html[data-palette="light"] * { scrollbar-color: #888888 #eeeeee; }
+html[data-palette="light"] .site-header { background: #ffffff; border-color: #dedede; }
+html[data-palette="light"] .desktop-nav,
+html[data-palette="light"] .page-nav { background: #f2f2f2; }
+html[data-palette="light"] .mobile-nav { background: #ffffff; box-shadow: 0 15px 25px #00000014; }
+html[data-palette="light"] .header-contact,
+html[data-palette="light"] .button-outline { border-color: #8a8a8a; }
+html[data-palette="light"] .contact-section { background: #ededed; border-color: #cecece; }
+html[data-palette="light"] .application-form { background: #ffffff; border: 1px solid #cecece; }
+html[data-palette="light"] .age-panels article { background: #ffffff; }
+html[data-palette="light"] .age-panels article:first-child { background: #dedede; }
+html[data-palette="light"] .related-cta { background: #ededed; }
+html[data-palette="light"] .language-card { background: #f2f2f2; }
+html[data-palette="light"] .world-hero,
+html[data-palette="light"] .blue-section,
+html[data-palette="light"] .site-footer {
+  --ground: #111111;
+  --ink: #f5f5f5;
+  --muted: #b9b9b9;
+  --accent: #f5f5f5;
+  --accent-hover: #dedede;
+  --button-ink: #151515;
+  --focus: #b3b3b3;
+  --selection-bg: #f5f5f5;
+  --selection-ink: #111111;
+  --deep: #080808;
+  --surface: #1b1b1b;
+  --panel: #242424;
+  --line: #424242;
+  color: var(--ink);
+  color-scheme: dark;
+}

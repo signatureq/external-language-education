@@ -36,6 +36,18 @@ form?.querySelector('.clear-selection')?.addEventListener('click', () => {
   renderSelection();
 });
 const query = new URLSearchParams(window.location.search);
+const palette = query.get('palette');
+if (palette === 'light' || palette === 'black') {
+  document.querySelectorAll('a[href]').forEach(link => {
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#')) return;
+    const url = new URL(href, window.location.href);
+    if (url.origin === window.location.origin && url.pathname.endsWith('.html')) {
+      url.searchParams.set('palette', palette);
+      link.href = url.pathname + url.search + url.hash;
+    }
+  });
+}
 const languageNames = {italian:'Итальянский',english:'Английский',french:'Французский',spanish:'Испанский',chinese:'Китайский',korean:'Корейский',german:'Немецкий'};
 const requestedLanguage = query.get('language');
 if (languageSelect && requestedLanguage) {
