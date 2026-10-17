@@ -67,8 +67,8 @@ document.querySelectorAll('.cadence-controls').forEach(group => {
 });
 
 const scheduleValues = {
-  morning: {title:'Утро · 9:00–13:30',description:'Начните день с языка, а вторую половину оставьте для других планов. Четыре часа занятий и 30 минут перерыва.',selection:'Утро, 9:00–13:30'},
-  evening: {title:'Вечер · 17:30–22:00',description:'Посвятите языку вторую половину дня и сохраните своё утреннее расписание. Четыре часа занятий и 30 минут перерыва.',selection:'Вечер, 17:30–22:00'}
+  morning: {title:'Утро · 9:00–13:30',description:'Первая половина дня для языка. 4 часа занятий и 30 минут перерыва.',selection:'Утро, 9:00–13:30'},
+  evening: {title:'Вечер · 17:30–22:00',description:'Вечернее погружение в практику. 4 часа занятий и 30 минут перерыва.',selection:'Вечер, 17:30–22:00'}
 };
 function updateSchedule(key, updateUrl = true) {
   const value = Object.hasOwn(scheduleValues,key) ? scheduleValues[key] : null;
@@ -79,7 +79,7 @@ function updateSchedule(key, updateUrl = true) {
   document.querySelector('[data-schedule-description]').textContent = value.description;
   document.querySelector('[data-select-time]').dataset.selectTime = key;
   const image = document.querySelector('[data-schedule-image]');
-  if (image) { image.src = key === 'morning' ? 'assets/photos/approved/classroom.jpg' : 'assets/photos/approved/moscow-evening.jpg'; image.alt = key === 'morning' ? 'Иллюстрация учебного пространства' : 'Вечерний Москва-Сити'; }
+  if (image) { image.src = key === 'morning' ? 'assets/photos/blue/group-practice.jpg' : 'assets/photos/blue/study-detail.jpg'; image.alt = key === 'morning' ? 'Иллюстрация группового занятия' : 'Иллюстрация работы с учебными материалами'; }
   if (updateUrl) {
     const url = new URL(window.location.href);
     url.searchParams.set('time',key);
