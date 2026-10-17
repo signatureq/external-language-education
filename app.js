@@ -37,7 +37,7 @@ form?.querySelector('.clear-selection')?.addEventListener('click', () => {
 });
 const query = new URLSearchParams(window.location.search);
 const palette = query.get('palette');
-if (palette === 'light' || palette === 'black') {
+if (['black', 'sand', 'navy', 'petrol', 'ember', 'olive'].includes(palette)) {
   document.querySelectorAll('a[href]').forEach(link => {
     const href = link.getAttribute('href');
     if (!href || href.startsWith('#')) return;
