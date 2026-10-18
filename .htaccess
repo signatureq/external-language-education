@@ -1,1 +1,15 @@
 DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+
+# Keep the production hostname consistent with canonical URLs and sitemap.xml.
+RewriteCond %{HTTP_HOST} ^www\.externlangschool\.ru$ [NC]
+RewriteRule ^ https://externlangschool.ru%{REQUEST_URI} [R=301,L,NE]
+
+# Redirect only explicit index.html requests, not DirectoryIndex resolution.
+RewriteCond %{HTTP_HOST} ^externlangschool\.ru$ [NC]
+RewriteCond %{THE_REQUEST} \s/+index\.html[?\s] [NC]
+RewriteRule ^index\.html$ https://externlangschool.ru/ [R=301,L]
+</IfModule>
