@@ -80,8 +80,8 @@ document.querySelectorAll('.cadence-controls').forEach(group => {
 });
 
 const scheduleValues = {
-  morning: {title:'Утро · 9:00–13:30',label:'Утро',start:'9:00',end:'13:30',description:'Первая половина дня для языка — 4 часа занятий и 30 минут перерыва',selection:'Утро, 9:00–13:30'},
-  evening: {title:'Вечер · 17:30–22:00',label:'Вечер',start:'17:30',end:'22:00',description:'Вечернее погружение в практику — 4 часа занятий и 30 минут перерыва',selection:'Вечер, 17:30–22:00'}
+  morning: {title:'Утро · 9:00–13:30',description:'Первая половина дня для языка — 4 часа занятий и 30 минут перерыва',selection:'Утро, 9:00–13:30'},
+  evening: {title:'Вечер · 17:30–22:00',description:'Вечернее погружение в практику — 4 часа занятий и 30 минут перерыва',selection:'Вечер, 17:30–22:00'}
 };
 function updateSchedule(key, updateUrl = true) {
   const value = Object.hasOwn(scheduleValues,key) ? scheduleValues[key] : null;
@@ -91,10 +91,11 @@ function updateSchedule(key, updateUrl = true) {
   heading.textContent = value.title;
   document.querySelector('[data-schedule-description]').textContent = value.description;
   document.querySelector('[data-select-time]').dataset.selectTime = key;
-  ['label', 'start', 'end'].forEach(part => {
-    const target = document.querySelector('[data-schedule-' + part + ']');
-    if (target) target.textContent = value[part];
-  });
+  const image = document.querySelector('[data-schedule-image]');
+  if (image) {
+    image.src = key === 'morning' ? 'assets/photos/blue/group-practice.jpg' : 'assets/photos/blue/study-detail.jpg';
+    image.alt = key === 'morning' ? 'Иллюстрация группового занятия' : 'Иллюстрация работы с учебными материалами';
+  }
   if (updateUrl) {
     const url = new URL(window.location.href);
     url.searchParams.set('time',key);
