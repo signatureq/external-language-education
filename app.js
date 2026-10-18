@@ -229,6 +229,14 @@ const priceValues = {
   fortnight: {price:'28 800 ₽',period:'/ две недели',description:'32 часа · 8 учебных дней',selection:'Оплата раз в две недели'},
   month: {price:'57 600 ₽',period:'/ четыре недели',description:'64 часа · 16 учебных дней',selection:'Оплата за четыре недели'}
 };
+if (window.schoolSettings) {
+  const rate = Number(window.schoolSettings.rate);
+  if (Number.isFinite(rate) && rate > 0) {
+    Object.entries({week:16,fortnight:32,month:64}).forEach(([key,hours]) => {
+      priceValues[key].price = (rate * hours).toLocaleString('ru-RU') + ' ₽';
+    });
+  }
+}
 document.querySelectorAll('.cadence-controls').forEach(group => {
   const buttons = Array.from(group.querySelectorAll('.cadence-button'));
   buttons.forEach(button => button.addEventListener('click', () => {
@@ -250,6 +258,15 @@ const scheduleValues = {
   morning: {title:'Утро · 9:00–13:30',description:'Первая половина дня для языка — 4 часа занятий и 30 минут перерыва',selection:'Утро, 9:00–13:30'},
   evening: {title:'Вечер · 17:30–22:00',description:'Вечернее погружение в практику — 4 часа занятий и 30 минут перерыва',selection:'Вечер, 17:30–22:00'}
 };
+if (window.schoolSettings) {
+  ['morning','evening'].forEach(key => {
+    const time = window.schoolSettings[key];
+    if (!time) return;
+    const label = key === 'morning' ? 'Утро' : 'Вечер';
+    scheduleValues[key].title = label + ' · ' + time;
+    scheduleValues[key].selection = label + ', ' + time;
+  });
+}
 function updateSchedule(key, updateUrl = true) {
   const value = Object.hasOwn(scheduleValues,key) ? scheduleValues[key] : null;
   const heading = document.querySelector('[data-schedule-title]');
@@ -260,7 +277,7 @@ function updateSchedule(key, updateUrl = true) {
   document.querySelector('[data-select-time]').dataset.selectTime = key;
   const image = document.querySelector('[data-schedule-image]');
   if (image) {
-    image.src = key === 'morning' ? 'assets/photos/blue/group-practice.jpg' : 'assets/photos/blue/study-detail.jpg';
+    image.src = key === 'morning' ? (window.schoolSettings?.morningPhoto || 'assets/photos/blue/group-practice.jpg') : 'assets/photos/blue/study-detail.jpg';
     image.alt = key === 'morning' ? 'Иллюстрация группового занятия' : 'Иллюстрация работы с учебными материалами';
   }
   if (updateUrl) {
