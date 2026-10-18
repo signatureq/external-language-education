@@ -76,7 +76,7 @@ def language_card(l):
 
 def languages_section(full=False):
     choice=f'''<a class="language-choice" href="#application" data-language="Помогите выбрать"><div class="language-image"><img src="{PHOTO}study-detail.jpg" alt="Иллюстрация совместной работы с учебными материалами" width="1536" height="1024" loading="lazy"><span>Иллюстрация учебного формата</span></div><div class="language-card-body"><h3>Поможем<br>выбрать язык</h3><p>Познакомьтесь с форматом и задайте вопросы специалисту школы</p><span class="card-link">Посоветоваться {ARROW}</span></div></a>'''
-    content = '<section class="shell section" id="languages">'+section_title('Выберите<br>свой язык','С нуля или с вашего уровня. Для общения, путешествий и просто для себя.')+'<div class="language-filters" role="group" aria-label="Показать языки"><button class="filter-button" data-filter="all" aria-pressed="true">Все языки <span>7</span></button><button class="filter-button" data-filter="europe" aria-pressed="false">Европейские</button><button class="filter-button" data-filter="asia" aria-pressed="false">Азиатские</button></div><div class="language-grid" data-active-filter="all">'+''.join(language_card(l)for l in LANGUAGES)+choice+'</div></section>'
+    content = '<section class="shell section" id="languages">'+section_title('Выберите свой язык','С нуля или с вашего уровня. Для общения, путешествий и просто для себя.')+'<div class="language-filters" role="group" aria-label="Показать языки"><button class="filter-button" data-filter="all" aria-pressed="true">Все языки <span>7</span></button><button class="filter-button" data-filter="europe" aria-pressed="false">Европейские</button><button class="filter-button" data-filter="asia" aria-pressed="false">Азиатские</button></div><div class="language-grid" data-active-filter="all">'+''.join(language_card(l)for l in LANGUAGES)+choice+'</div></section>'
     return graphite_band(content) if full else content
 
 def format_feature(include_times=False):
@@ -86,7 +86,7 @@ def format_feature(include_times=False):
 def schedule_cards():
     return f'''<section class="shell section" id="times">{section_title('Утро или вечер','Четыре часа занятий и 30 минут перерыва. Конкретные дни недели уточняются при выборе группы.')}<div class="time-grid"><a class="time-card" href="schedule.html?time=morning"><img src="{PHOTO}group-practice.jpg" alt="Иллюстрация группового занятия" width="1536" height="1024" loading="lazy"><div class="time-card-content"><h3>Утро</h3><strong>9:00–13:30</strong><p>Первая половина дня для языка</p><span class="time-link">Выбрать утро {ARROW}</span></div></a><a class="time-card" href="schedule.html?time=evening"><img src="{PHOTO}study-detail.jpg" alt="Иллюстрация работы с учебными материалами" width="1536" height="1024" loading="lazy"><div class="time-card-content"><h3>Вечер</h3><strong>17:30–22:00</strong><p>Вечернее погружение в практику</p><span class="time-link">Выбрать вечер {ARROW}</span></div></a></div><p class="section-note">Изображения иллюстрируют обучение, а не конкретное помещение школы.</p></section>'''
 
-def calculator(title='Прозрачная цена<br>Гибкий ритм оплаты',heading='h2'):
+def calculator(title='Стоимость обучения',heading='h2'):
     tuition_photo=photo(PHOTO+'study-detail.jpg','Иллюстрация работы с учебными материалами','tuition-photo','Иллюстрация учебного формата') if heading=='h1' else ''
     return f'''<div class="calculator"><div><{heading}>{title}</{heading}><p>900 ₽ за час. Без предоплаты за весь курс. Пакеты на одну, две или четыре учебные недели.</p><a class="text-link" href="tuition.html#price-table">Посмотреть все расчёты {ARROW}</a></div><div class="calculator-box"><div class="cadence-controls" role="group" aria-label="Период оплаты"><button class="cadence-button" data-cadence="week" aria-pressed="true">Неделя</button><button class="cadence-button" data-cadence="fortnight" aria-pressed="false">Две недели</button><button class="cadence-button" data-cadence="month" aria-pressed="false">Четыре недели</button></div><div class="price-live" aria-live="polite"><div class="calculator-price" data-price>14 400 ₽</div><div class="calculator-period" data-price-period>/ неделя</div><p data-price-description>16 часов · 4 учебных дня</p></div>{button('Обсудить обучение')}<p class="calculator-note">Цена часа одинакова для любого периода</p></div>{tuition_photo}</div>'''
 
@@ -127,7 +127,7 @@ def essentials(items):
     return '<dl class="essentials">'+''.join(f'<div><dt>{a}</dt><dd>{b}</dd></div>'for a,b in items)+'</dl>'
 
 def level_strip():
-    return '<div class="level-list"><span>0–A1</span><span>A1–B2</span><span>B2</span></div><p class="small">Уровни групп. Подбор после определения текущих знаний.</p>'
+    return '<div class="levels-panel"><div class="levels-heading"><h3>Уровни групп</h3><p>Подбор после определения текущих знаний.</p></div><div class="level-list"><span>0–A1</span><span>A1–B2</span><span>B2</span></div></div>'
 
 def lesson_flow():
     stages=[('Разобраться','Новая тема и понятное объяснение'),('Попробовать','Задания и применение материала'),('Заговорить','Диалоги, пары и обсуждения'),('Закрепить','Повторение и разбор ошибок')]
