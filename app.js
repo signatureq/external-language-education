@@ -109,62 +109,19 @@ document.querySelector('[data-select-time]')?.addEventListener('click', event =>
   if (value) { selection.time = value.selection; renderSelection(); }
 });
 
-function fieldError(field, message) {
-  const error = form.querySelector('#' + field.id + '-error');
-  if (!error) return;
-  error.textContent = message;
-  error.hidden = !message;
-  if (message) field.setAttribute('aria-invalid','true');
-  else field.removeAttribute('aria-invalid');
-}
-function validateField(field) {
-  let message = '';
-  if (field.id === 'name' && !field.value.trim()) message = 'Укажите, как к вам обращаться.';
-  if (field.id === 'phone') {
-    const digits = field.value.replace(/\D/g,'');
-    if (digits.length < 10 || digits.length > 15 || !/^[+\d\s().-]+$/.test(field.value)) message = 'Укажите телефон с кодом страны — от 10 до 15 цифр.';
-  }
-  if (field.id === 'language' && !field.value) message = 'Выберите язык или пункт «Помогите выбрать».';
-  fieldError(field,message);
-  return !message;
-}
-const requiredFields = form ? ['name','phone','language'].map(id => form.querySelector('#'+id)) : [];
-requiredFields.forEach(field => {
-  field.addEventListener('input', () => fieldError(field,''));
-  field.addEventListener('change', () => fieldError(field,''));
-});
-let submitting = false;
+// Applications are not collected until an actual delivery channel is configured.
 form?.addEventListener('submit', event => {
   event.preventDefault();
-  if (submitting) return;
-  const invalid = requiredFields.filter(field => !validateField(field));
-  if (invalid.length) { invalid[0].focus(); return; }
-  submitting = true;
-  const button = form.querySelector('[type=submit]');
-  button.disabled = true;
-  button.querySelector('span').textContent = 'Проверяем данные…';
-  form.setAttribute('aria-busy','true');
-  // Local demonstration only. No network requests or personal-data storage.
-  setTimeout(() => {
-    const status = form.querySelector('.form-status');
-    form.querySelector('.form-fields').hidden = true;
-    status.hidden = false;
-    form.removeAttribute('aria-busy');
-    submitting = false;
-    button.disabled = false;
-    button.querySelector('span').textContent = 'Оставить заявку';
-    status.focus({preventScroll:true});
-  },400);
+  form.querySelector('.form-availability')?.focus({preventScroll:true});
 });
-form?.querySelector('.form-reset')?.addEventListener('click', () => {
-  form.reset();
-  requiredFields.forEach(field => fieldError(field,''));
-  Object.keys(selection).forEach(key => delete selection[key]);
-  renderSelection();
-  form.querySelector('.form-fields').hidden = false;
-  form.querySelector('.form-status').hidden = true;
-  form.querySelector('#name').focus({preventScroll:true});
-});
+
+const legalContents = document.querySelector('.legal-toc');
+if (legalContents) {
+  const wideDocument = window.matchMedia('(min-width: 961px)');
+  const syncContents = () => { legalContents.open = wideDocument.matches; };
+  syncContents();
+  wideDocument.addEventListener('change', syncContents);
+}
 
 // The language tabs filter programs; they do not assess the visitor.
 document.querySelectorAll('.filter-button[data-filter]').forEach(button => button.addEventListener('click', () => {

@@ -60,6 +60,22 @@
 .form-note { font-size: 12px; }
 .field input, .field select, .field textarea { font-size: 16px; }
 
+/* Separate consent and an honest state while applications are unavailable. */
+.application-inputs { display: grid; gap: 18px; padding: 0; margin: 0; border: 0; min-width: 0; }
+.consent-label { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 12px; align-items: start; font-size: 13px; line-height: 1.7; }
+.consent-label input { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--reading-accent, #292b2d); }
+.consent-label a, .form-privacy a { text-decoration: underline; text-underline-offset: 3px; }
+.form-privacy, .form-availability { font-size: 12px; line-height: 1.75; color: var(--muted); margin: 0; }
+.form-availability { padding-top: 14px; border-top: 1px solid var(--line); }
+.form-availability:focus { outline: 2px solid var(--accent); outline-offset: 5px; }
+.field :disabled { opacity: .8; cursor: not-allowed; }
+.application-form .button:disabled { opacity: .65; transform: none; cursor: not-allowed; }
+.footer-bottom { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 24px; }
+.footer-legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 24px; }
+.footer-legal a { font-size: 12px; line-height: 1.6; }
+.footer-legal a:hover { text-decoration: underline; }
+.footer-bottom > .back-top { grid-column: auto; grid-row: auto; }
+
 @media (max-width: 1020px) {
   .world-hero { height: 750px; }
   .hero-bottom { gap: 30px; }
@@ -93,6 +109,9 @@
 }
 
 @media (max-width: 560px) {
+  .footer-bottom { grid-template-columns: 1fr auto; gap: 20px; }
+  .footer-legal { grid-column: 1 / -1; grid-row: 2; justify-content: start; flex-direction: column; gap: 12px; }
+  .footer-bottom > .back-top { grid-column: 2; grid-row: 1; }
   .world-hero { height: 690px; }
   .hero-content { padding-top: 34px; }
   .hero-bottom { bottom: 48px; }

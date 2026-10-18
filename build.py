@@ -1,8 +1,9 @@
-"""Build the local, reviewable External Language Education website."""
+"""Build the External Language Education website."""
 from pathlib import Path
 from html import escape
 import json
 from hashlib import sha256
+from legal_documents import legal_pages, render_document
 
 ROOT = Path(__file__).resolve().parent
 def asset_version(name):
@@ -11,9 +12,11 @@ def asset_version(name):
 STYLE_VERSION = asset_version('styles.css')
 COLOR_PALETTE_VERSION = asset_version('palette-colors.css')
 REFINEMENT_VERSION = asset_version('refinements.css')
+LEGAL_STYLE_VERSION = asset_version('legal.css')
 SCRIPT_VERSION = asset_version('app.js')
 PALETTE_INIT = """const paletteBackgrounds={black:"#111111",sand:"#f8f3ea",navy:"#14212a"};const requestedPalette=new URLSearchParams(location.search).get("palette");const activePalette=Object.hasOwn(paletteBackgrounds,requestedPalette)?requestedPalette:"sand";document.documentElement.dataset.palette=activePalette;document.querySelector('meta[name="theme-color"]').content=paletteBackgrounds[activePalette]"""
 LANGUAGES = json.loads((ROOT / 'content.json').read_text(encoding='utf-8'))
+LEGAL_SETTINGS = json.loads((ROOT / 'legal-settings.json').read_text(encoding='utf-8'))
 PHOTO = 'assets/photos/blue/'
 NAV = [('languages.html','Языки'),('format.html','Обучение'),('admission.html','Поступление'),('tuition.html','Стоимость'),('schedule.html','Расписание')]
 
@@ -31,15 +34,27 @@ def photo(src,alt,cls='',caption=None,eager=False):
     return f'<figure class="photo {cls}"><img{tone} src="{src}" alt="{alt}" width="1536" height="1024" {"fetchpriority=high" if eager else "loading=lazy"}>'+ (f'<figcaption>{caption}</figcaption>' if caption else '')+'</figure>'
 
 def header(page):
+    contact='index.html#application' if page in ('privacy.html','consent.html') else '#application'
     links=''.join(f'<a href="{href}"'+(' aria-current="page"' if href==page else '')+f'>{label}</a>' for href,label in NAV)
-    return f'''<a class="skip-link" href="#main">Перейти к содержимому</a><header class="site-header"><div class="shell header-inner">{BRAND}<nav class="desktop-nav" aria-label="Основная навигация">{links}</nav><a class="header-contact" href="#application">Связаться {ARROW}</a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-navigation">Меню {icon('menu')}</button></div><nav class="mobile-nav" id="mobile-navigation" aria-label="Мобильная навигация" hidden><a href="index.html">Главная</a>{links}<a href="interview.html">Пробный урок</a><a href="#application">Связаться со школой</a></nav></header>'''
+    return f'''<a class="skip-link" href="#main">Перейти к содержимому</a><header class="site-header"><div class="shell header-inner">{BRAND}<nav class="desktop-nav" aria-label="Основная навигация">{links}</nav><a class="header-contact" href="{contact}">Связаться {ARROW}</a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-navigation">Меню {icon('menu')}</button></div><nav class="mobile-nav" id="mobile-navigation" aria-label="Мобильная навигация" hidden><a href="index.html">Главная</a>{links}<a href="interview.html">Пробный урок</a><a href="{contact}">Связаться со школой</a></nav></header>'''
 
-def footer():
-    return f'''<footer class="site-footer"><div class="shell footer-grid"><div>{BRAND}<p>Иностранные языки экстерном<br>Учимся в Москве<br>Говорим с целым миром</p></div><div><h3>Школа</h3><a href="format.html">Как мы учимся</a><a href="admission.html">Поступление</a><a href="interview.html">Собеседование и пробный урок</a><a href="schedule.html">Расписание</a><a href="tuition.html">Стоимость и оплата</a></div><div><h3>Языки</h3>{''.join(f'<a href="{l["slug"]}.html">{l["name"]}</a>' for l in LANGUAGES)}</div><div><h3>Начнём с разговора</h3><p>Узнайте об интенсиве<br>Выберите свою группу</p>{button('Оставить заявку',kind='button-small')}<p class="footer-place">{icon('pin')} Москва</p></div></div><div class="shell footer-bottom"><span>© 2026 External Language Education</span><span>Визуальная версия для согласования</span><a href="#main">Наверх</a></div></footer>'''
+def footer(contact='#application'):
+    return f'''<footer class="site-footer"><div class="shell footer-grid"><div>{BRAND}<p>Иностранные языки экстерном<br>Учимся в Москве<br>Говорим с целым миром</p></div><div><h3>Школа</h3><a href="format.html">Как мы учимся</a><a href="admission.html">Поступление</a><a href="interview.html">Собеседование и пробный урок</a><a href="schedule.html">Расписание</a><a href="tuition.html">Стоимость и оплата</a></div><div><h3>Языки</h3>{''.join(f'<a href="{l["slug"]}.html">{l["name"]}</a>' for l in LANGUAGES)}</div><div><h3>Начнём с разговора</h3><p>Узнайте об интенсиве<br>Выберите свою группу</p>{button('Оставить заявку',href=contact,kind='button-small')}<p class="footer-place">{icon('pin')} Москва</p></div></div><div class="shell footer-bottom"><span>© 2026 External Language Education</span><nav class="footer-legal" aria-label="Правовая информация"><a href="privacy.html">Политика обработки данных</a><a href="consent.html">Согласие на обработку данных</a></nav><a class="back-top" href="#main">Наверх</a></div></footer>'''
 
 def application(language=None):
     opts='<option value="" disabled'+(' selected' if not language else '')+'>Выберите язык</option>'+''.join(f'<option'+(' selected' if language==l['name'] else '')+f'>{l["name"]}</option>' for l in LANGUAGES)+'<option>Помогите выбрать</option>'
-    return f'''<section class="contact-section graphite-section" id="application" aria-labelledby="application-heading"><div class="shell contact-grid"><div class="contact-copy"><h2 id="application-heading">Давайте<br><span>познакомимся</span></h2><p>Расскажем об интенсиве, поможем выбрать язык и группу. Можно прийти с конкретной задачей или просто с желанием учиться.</p><div class="contact-location">{icon('pin')} Очное обучение в Москве</div><div class="contact-photo"><img src="{PHOTO}study-detail.jpg" alt="Иллюстрация совместной работы с языком" width="1536" height="1024" loading="lazy"><span>Иллюстрация учебного формата</span></div></div><form class="application-form" aria-label="Заявка на обучение" novalidate><div class="form-fields"><p class="form-intro">Оставьте контакты — мы поможем выбрать язык и группу</p><div class="form-selection" hidden><span data-selection-text></span><button class="clear-selection" type="button">Сбросить</button></div><div class="field"><label for="name">Как вас зовут?</label><input id="name" autocomplete="given-name" placeholder="Ваше имя" required maxlength="80" aria-describedby="name-error"><p class="form-error" id="name-error" role="alert" hidden></p></div><div class="field"><label for="phone">Телефон</label><input id="phone" type="tel" autocomplete="tel" placeholder="+7 ___ ___ __ __" required maxlength="25" aria-describedby="phone-error"><p class="form-error" id="phone-error" role="alert" hidden></p></div><div class="field"><label for="language">Какой язык хотите изучать?</label><select id="language" required aria-describedby="language-error">{opts}</select><p class="form-error" id="language-error" role="alert" hidden></p></div><div class="field"><label for="comment">Ваш вопрос <span>необязательно</span></label><textarea id="comment" maxlength="1000" placeholder="Например, хочу начать с нуля"></textarea></div><button class="button" type="submit"><span>Оставить заявку</span>{ARROW}</button><p class="form-note">Демонстрационная форма: данные никуда не отправляются</p></div><div class="form-status" role="status" tabindex="-1" hidden><div class="status-symbol">{icon('check')}</div><h3>Всё готово<br>для знакомства</h3><p>Так будет выглядеть подтверждение. В этой демонстрационной версии данные не отправлены в школу.</p><button class="button form-reset" type="button">Заполнить ещё раз {ARROW}</button></div></form></div></section>'''
+    return f'''<section class="contact-section graphite-section" id="application" aria-labelledby="application-heading"><div class="shell contact-grid"><div class="contact-copy"><h2 id="application-heading">Давайте<br><span>познакомимся</span></h2><p>Расскажем об интенсиве, поможем выбрать язык и группу. Можно прийти с конкретной задачей или просто с желанием учиться.</p><div class="contact-location">{icon('pin')} Очное обучение в Москве</div><div class="contact-photo"><img src="{PHOTO}study-detail.jpg" alt="Иллюстрация совместной работы с языком" width="1536" height="1024" loading="lazy"><span>Иллюстрация учебного формата</span></div></div>
+    <form class="application-form" aria-label="Заявка на обучение" novalidate><div class="form-fields"><p class="form-intro">Оставьте контакты — мы поможем выбрать язык и группу</p><div class="form-selection" hidden><span data-selection-text></span><button class="clear-selection" type="button">Сбросить</button></div>
+    <fieldset class="application-inputs" disabled><legend class="sr-only">Данные для обращения в школу</legend>
+    <div class="field"><label for="name">Как вас зовут?</label><input id="name" name="name" autocomplete="given-name" placeholder="Ваше имя" required maxlength="80"></div>
+    <div class="field"><label for="phone">Телефон</label><input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+7 ___ ___ __ __" required maxlength="25"></div>
+    <div class="field"><label for="language">Какой язык хотите изучать?</label><select id="language" name="language" required>{opts}</select></div>
+    <div class="field"><label for="comment">Ваш вопрос <span>необязательно</span></label><textarea id="comment" name="comment" maxlength="1000" placeholder="Например, хочу начать с нуля"></textarea></div>
+    <div class="consent-field"><label class="consent-label" for="consent"><input id="consent" name="consent" type="checkbox" required value="yes"><span>Я даю <a href="consent.html" target="_blank" rel="noopener noreferrer">согласие на обработку персональных данных</a> для ответа на моё обращение</span></label></div>
+    </fieldset>
+    <p class="form-privacy">Подробнее о работе с данными — в <a href="privacy.html" target="_blank" rel="noopener noreferrer">политике обработки персональных данных</a></p>
+    <button class="button" type="submit" disabled aria-describedby="application-availability"><span>Отправка пока недоступна</span>{ARROW}</button><p class="form-availability" id="application-availability" role="status" tabindex="-1">Приём заявок через сайт пока недоступен. Пожалуйста, зайдите позже.</p></div></form></div></section>'''
+
 
 def faq(items,title='То, что хочется уточнить'):
     return f'<section class="shell section faq-layout"><div><h2>{title}</h2><p>Не нашли свой вопрос?<br>Обсудим его при знакомстве.</p><a class="text-link" href="#application">Задать вопрос {ARROW}</a></div><div class="faq-list">'+''.join(f'<details><summary>{q}{icon("plus")}</summary><div class="faq-answer"><p>{a}</p></div></details>'for q,a in items)+'</div></section>'
@@ -165,8 +180,15 @@ for l in LANGUAGES:
     body+='<section class="shell other-languages"><h2>Другие языки</h2><div>'+''.join(f'<a href="{a["slug"]}.html">{a["name"]} {ARROW}</a>'for a in LANGUAGES if a!=l)+'</div></section>'
     pages[l['slug']+'.html']=dict(title=l['title'],content=body,language=l['name'])
 
+for filename, document in legal_pages(LEGAL_SETTINGS).items():
+    pages[filename]=dict(title=document['title'],description=document['description'],content=render_document(document,LEGAL_SETTINGS),legal=True)
+
 for filename,page in pages.items():
     title=escape(page['title'])
-    html=f'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title} — External Language Education</title><meta name="description" content="{title}. Иностранные языки экстерном в Москве. 4 часа в день, 4 дня в неделю, группы до 8 человек."><meta name="theme-color" content="#111111"><meta name="robots" content="noindex,nofollow"><link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=neutral"><link rel="preload" href="assets/fonts/body-normal-400.ttf" as="font" type="font/ttf" crossorigin><link rel="preload" href="assets/fonts/body-normal-600.ttf" as="font" type="font/ttf" crossorigin><script>{PALETTE_INIT}</script><link rel="stylesheet" href="styles.css?v={STYLE_VERSION}"><link rel="stylesheet" href="palette-colors.css?v={COLOR_PALETTE_VERSION}"><link rel="stylesheet" href="refinements.css?v={REFINEMENT_VERSION}"><script defer src="app.js?v={SCRIPT_VERSION}"></script></head><body class="page-{filename[:-5]}">{header(filename)}<main id="main">{page['content']}{application(page.get('language'))}</main>{footer()}</body></html>'''
+    description=escape(page.get('description',page['title']+'. Иностранные языки экстерном в Москве. 4 часа в день, 4 дня в неделю, группы до 8 человек.'),quote=True)
+    legal_style=f'<link rel="stylesheet" href="legal.css?v={LEGAL_STYLE_VERSION}">' if page.get('legal') else ''
+    application_html='' if page.get('legal') else application(page.get('language'))
+    footer_html=footer('index.html#application' if page.get('legal') else '#application')
+    html=f'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title} — External Language Education</title><meta name="description" content="{description}"><meta name="theme-color" content="#111111"><meta name="robots" content="noindex,nofollow"><link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=neutral"><link rel="preload" href="assets/fonts/body-normal-400.ttf" as="font" type="font/ttf" crossorigin><link rel="preload" href="assets/fonts/body-normal-600.ttf" as="font" type="font/ttf" crossorigin><script>{PALETTE_INIT}</script><link rel="stylesheet" href="styles.css?v={STYLE_VERSION}"><link rel="stylesheet" href="palette-colors.css?v={COLOR_PALETTE_VERSION}"><link rel="stylesheet" href="refinements.css?v={REFINEMENT_VERSION}">{legal_style}<script defer src="app.js?v={SCRIPT_VERSION}"></script></head><body class="page-{filename[:-5]}">{header(filename)}<main id="main">{page['content']}{application_html}</main>{footer_html}</body></html>'''
     (ROOT/filename).write_text(html.replace('<br>', ' <br>'),encoding='utf-8',newline='\n')
 print(f'Built {len(pages)} pages.')
