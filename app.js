@@ -28,11 +28,11 @@ const siteMotion = (() => {
     return animation;
   }
 
-  function reveal(element, delay = 0) {
+  function reveal(element, delay = 0, animate = true) {
     pending.delete(element);
     observer?.unobserve(element);
     element.classList.remove('motion-pending');
-    play(element, [{opacity: 0, transform: 'translateY(20px)'}, {opacity: 1, transform: 'none'}], {delay, duration: 680});
+    if (animate) play(element, [{opacity: 0, transform: 'translateY(20px)'}, {opacity: 1, transform: 'none'}], {delay, duration: 680});
   }
 
   function refresh(element, delay = 0) {
@@ -100,7 +100,7 @@ const siteMotion = (() => {
       element.dataset.motionDelay = String(delay);
       const rect = element.getBoundingClientRect();
       if (!rect.width || rect.bottom <= 0) return;
-      if (rect.top < window.innerHeight - 24) reveal(element, delay);
+      if (rect.top < window.innerHeight - 24) reveal(element, delay, !document.documentElement.dataset.pageNavigation);
       else {
         element.classList.add('motion-pending');
         pending.add(element);
@@ -125,8 +125,39 @@ const siteMotion = (() => {
     active.forEach(({animation, complete}) => { animation.cancel(); complete?.(); });
     active.clear();
   });
+  // The new page must be fully visible when the browser takes its snapshot.
+  window.addEventListener('pagereveal', event => {
+    if (!event.viewTransition) return;
+    pending.forEach(element => {
+      const rect = element.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) reveal(element, 0, false);
+    });
+    active.forEach((entry, element) => {
+      if (!element.hasAttribute('data-motion-reveal')) return;
+      const rect = element.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) cancel(element);
+    });
+  });
   return {init, refresh, filterPrograms};
 })();
+
+function initPageNavigation() {
+  // Keep ordinary links/history intact where cross-document transitions are absent.
+  if ('CSSViewTransitionRule' in window || !document.body.animate) return;
+  const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let entrance;
+  document.documentElement.dataset.pageNavigation = 'fallback';
+  const arrive = () => {
+    entrance?.cancel();
+    if (!preference.matches) {
+      entrance = document.body.animate([{opacity: 0}, {opacity: 1}], {duration: 300, easing: 'ease-out'});
+      entrance.finished.catch(() => {});
+    }
+  };
+  arrive();
+  window.addEventListener('pageshow', event => { if (event.persisted) arrive(); });
+  preference.addEventListener('change', event => { if (event.matches) entrance?.cancel(); });
+}
 
 const menuButton = document.querySelector('.menu-toggle');
 const mobileNav = document.querySelector('.mobile-nav');
@@ -278,4 +309,5 @@ if (pageLinks.length && 'IntersectionObserver' in window) {
   pageLinks.forEach(link => { const section=document.getElementById(link.hash.slice(1)); if(section)observer.observe(section); });
 }
 
+initPageNavigation();
 siteMotion.init();

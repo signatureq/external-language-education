@@ -1,6 +1,25 @@
 /* Short, one-time entrances; interaction feedback stays close to the content. */
 :root { --motion-ease: cubic-bezier(.22, 1, .36, 1); }
 
+/* The browser keeps the current page visible until the next one is ready. */
+@view-transition { navigation: auto; }
+.site-header { view-transition-name: site-header; }
+::view-transition-group(root) { animation-duration: .36s; }
+::view-transition-old(root) {
+  animation: page-depart .22s ease-in both;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: page-arrive .36s var(--motion-ease) both;
+  mix-blend-mode: normal;
+}
+/* Keep the navigation in place while the page content changes. */
+::view-transition-group(site-header) { z-index: 1; animation-duration: .36s; }
+::view-transition-old(site-header) { display: none; }
+::view-transition-new(site-header) { animation: none; }
+@keyframes page-depart { to { opacity: 0; } }
+@keyframes page-arrive { from { opacity: 0; } to { opacity: 1; } }
+
 @media (prefers-reduced-motion: no-preference) {
   .motion-pending { opacity: 0; }
 
@@ -50,6 +69,9 @@
 
 /* Content is always visible without JavaScript and with reduced motion. */
 @media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+  ::view-transition-group(*) { animation-duration: 0s !important; }
+  ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   html { scroll-behavior: auto; }
   .motion-pending { opacity: 1; }
   :is(.language-card, .language-choice, .time-card, .rhythm-options > a, .button):hover,
