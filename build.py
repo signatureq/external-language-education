@@ -4,6 +4,7 @@ from html import escape
 import json
 from hashlib import sha256
 from legal_documents import legal_pages, render_document
+from seo import metadata, write_discovery
 
 ROOT = Path(__file__).resolve().parent
 def asset_version(name):
@@ -26,7 +27,7 @@ def icon(name='arrow'):
     paths={'person':'<circle cx="12" cy="7" r="3"/><path d="M5 21v-3a7 7 0 0 1 14 0v3"/>','arrow':'<path d="M4 12h15m-6-6 6 6-6 6"/>','plus':'<path d="M12 5v14M5 12h14"/>','menu':'<path d="M4 8h16M4 16h16"/>','check':'<path d="m5 12 4 4L19 6"/>','pin':'<path d="M19 10c0 5-7 11-7 11s-7-6-7-11a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/>','clock':'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>','globe':'<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/>','chevron':'<path d="m9 5 7 7-7 7"/>'}
     return f'<svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>'
 ARROW=icon()
-BRAND='<a class="brand" href="index.html" aria-label="External Language Education — главная"><span class="brand-word">external<span class="brand-dot">.</span></span><span class="brand-line">LANGUAGE EDUCATION</span></a>'
+BRAND='<a class="brand" href="./" aria-label="External Language Education — главная"><span class="brand-word">external<span class="brand-dot">.</span></span><span class="brand-line">LANGUAGE EDUCATION</span></a>'
 
 def button(label,href='#application',kind='',extra=''):
     return f'<a class="button {kind}" href="{href}" {extra}>{label}{ARROW}</a>'
@@ -36,9 +37,9 @@ def photo(src,alt,cls='',caption=None,eager=False):
     return f'<figure class="photo {cls}"><img{tone} src="{src}" alt="{alt}" width="1536" height="1024" {"fetchpriority=high" if eager else "loading=lazy"}>'+ (f'<figcaption>{caption}</figcaption>' if caption else '')+'</figure>'
 
 def header(page):
-    contact='index.html#application' if page in ('privacy.html','consent.html') else '#application'
+    contact='./#application' if page in ('privacy.html','consent.html') else '#application'
     links=''.join(f'<a href="{href}"'+(' aria-current="page"' if href==page else '')+f'>{label}</a>' for href,label in NAV)
-    return f'''<a class="skip-link" href="#main">Перейти к содержимому</a><header class="site-header"><div class="shell header-inner">{BRAND}<nav class="desktop-nav" aria-label="Основная навигация">{links}</nav><a class="header-contact" href="{contact}">Связаться {ARROW}</a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-navigation">Меню {icon('menu')}</button></div><nav class="mobile-nav" id="mobile-navigation" aria-label="Мобильная навигация" hidden><a href="index.html">Главная</a>{links}<a href="interview.html">Пробный урок</a><a href="{contact}">Связаться со школой</a></nav></header>'''
+    return f'''<a class="skip-link" href="#main">Перейти к содержимому</a><header class="site-header"><div class="shell header-inner">{BRAND}<nav class="desktop-nav" aria-label="Основная навигация">{links}</nav><a class="header-contact" href="{contact}">Связаться {ARROW}</a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-navigation">Меню {icon('menu')}</button></div><nav class="mobile-nav" id="mobile-navigation" aria-label="Мобильная навигация" hidden><a href="./">Главная</a>{links}<a href="interview.html">Пробный урок</a><a href="{contact}">Связаться со школой</a></nav></header>'''
 
 def footer(contact='#application'):
     return f'''<footer class="site-footer"><div class="shell footer-grid"><div>{BRAND}<p>Иностранные языки экстерном<br>Учимся в Москве<br>Говорим с целым миром</p></div><div><h3>Школа</h3><a href="format.html">Как мы учимся</a><a href="admission.html">Поступление</a><a href="interview.html">Собеседование и пробный урок</a><a href="schedule.html">Расписание</a><a href="tuition.html">Стоимость и оплата</a></div><div><h3>Языки</h3>{''.join(f'<a href="{l["slug"]}.html">{l["name"]}</a>' for l in LANGUAGES)}</div><div><h3>Начнём с разговора</h3><p>Узнайте об интенсиве<br>Выберите свою группу</p>{button('Оставить заявку',href=contact,kind='button-small')}<p class="footer-place">{icon('pin')} Москва</p></div></div><div class="shell footer-bottom"><span>© 2026 External Language Education</span><nav class="footer-legal" aria-label="Правовая информация"><a href="privacy.html">Политика обработки данных</a><a href="consent.html">Согласие на обработку данных</a></nav><a class="back-top" href="#main">Наверх</a></div></footer>'''
@@ -97,7 +98,7 @@ def admissions_steps():
     return '<div class="admission-steps">'+''.join(f'<article><span class="step-number">0{i}</span><h3>{t}</h3><p>{p}</p></article>'for i,(t,p)in enumerate(steps,1))+'</div>'
 
 def breadcrumb(title):
-    return f'<div class="shell breadcrumb"><a href="index.html">Главная</a><span>/</span><span>{title.replace("<br>"," ")}</span></div>'
+    return f'<div class="shell breadcrumb"><a href="./">Главная</a><span>/</span><span>{title.replace("<br>"," ")}</span></div>'
 
 def page_nav(links):
     return '<nav class="page-nav" aria-label="Содержание страницы"><div class="shell">'+''.join(f'<a href="#{i}">{t}</a>' for i,t in links)+'</div></nav>'
@@ -186,11 +187,11 @@ for filename, document in legal_pages(LEGAL_SETTINGS).items():
     pages[filename]=dict(title=document['title'],description=document['description'],content=render_document(document,LEGAL_SETTINGS),legal=True)
 
 for filename,page in pages.items():
-    title=escape(page['title'])
-    description=escape(page.get('description',page['title']+'. Иностранные языки экстерном в Москве. 4 часа в день, 4 дня в неделю, группы до 8 человек.'),quote=True)
+    seo_head=metadata(filename,page,LANGUAGES)
     legal_style=f'<link rel="stylesheet" href="legal.css?v={LEGAL_STYLE_VERSION}">' if page.get('legal') else ''
     application_html='' if page.get('legal') else application(page.get('language'))
-    footer_html=footer('index.html#application' if page.get('legal') else '#application')
-    html=f'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title} — External Language Education</title><meta name="description" content="{description}"><meta name="theme-color" content="#111111"><meta name="robots" content="noindex,nofollow"><link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=neutral"><link rel="preload" href="assets/fonts/body-normal-400.ttf" as="font" type="font/ttf" crossorigin><link rel="preload" href="assets/fonts/body-normal-600.ttf" as="font" type="font/ttf" crossorigin><script>{PALETTE_INIT};{PAGE_TRANSITION_INIT}</script><link rel="stylesheet" href="styles.css?v={STYLE_VERSION}"><link rel="stylesheet" href="palette-colors.css?v={COLOR_PALETTE_VERSION}"><link rel="stylesheet" href="refinements.css?v={REFINEMENT_VERSION}"><link rel="stylesheet" href="motion.css?v={MOTION_VERSION}">{legal_style}<script defer src="app.js?v={SCRIPT_VERSION}"></script></head><body class="page-{filename[:-5]}">{header(filename)}<main id="main">{page['content']}{application_html}</main>{footer_html}</body></html>'''
+    footer_html=footer('./#application' if page.get('legal') else '#application')
+    html=f'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{seo_head}<meta name="theme-color" content="#111111"><link rel="preload" href="assets/fonts/body-normal-400.ttf" as="font" type="font/ttf" crossorigin><link rel="preload" href="assets/fonts/body-normal-600.ttf" as="font" type="font/ttf" crossorigin><script>{PALETTE_INIT};{PAGE_TRANSITION_INIT}</script><link rel="stylesheet" href="styles.css?v={STYLE_VERSION}"><link rel="stylesheet" href="palette-colors.css?v={COLOR_PALETTE_VERSION}"><link rel="stylesheet" href="refinements.css?v={REFINEMENT_VERSION}"><link rel="stylesheet" href="motion.css?v={MOTION_VERSION}">{legal_style}<script defer src="app.js?v={SCRIPT_VERSION}"></script></head><body class="page-{filename[:-5]}">{header(filename)}<main id="main">{page['content']}{application_html}</main>{footer_html}</body></html>'''
     (ROOT/filename).write_text(html.replace('<br>', ' <br>'),encoding='utf-8',newline='\n')
-print(f'Built {len(pages)} pages.')
+write_discovery(ROOT,pages)
+print(f'Built {len(pages)} pages, robots.txt and sitemap.xml.')

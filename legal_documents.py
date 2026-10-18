@@ -1,12 +1,13 @@
 """Legal information pages, with operator details supplied separately."""
 from html import escape
 from datetime import date
+from site_config import site_url
 
 LAW = 'https://www.consultant.ru/document/cons_doc_LAW_61801/'
 CONSENT_LAW = LAW + '6c94959bc017ac80140621762d2ac59f6006b08c/'
 RIGHTS_LAW = LAW + '34585db685164ddd73440bf08348903bff6715aa/'
-GITHUB_PRIVACY = 'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement'
-SITE_URL = 'https://signatureq.github.io/external-language-education/'
+HOSTING_PRIVACY = 'https://timeweb.com/tw-static/docs/policy/personal_data.pdf'
+SITE_URL = site_url()
 
 
 def operator_block(settings):
@@ -49,8 +50,8 @@ def legal_pages(settings):
             <p>Сейчас приём заявок через сайт не подключён: база заявок на сайте не создаётся.</p>'''),
         ('technical', 'Технические данные и cookie', f'''
             <p>В коде сайта нет счётчиков посещаемости, рекламных пикселей и собственных аналитических cookie. Выбор палитры и времени занятий передаётся параметрами адреса страницы; сайт не записывает его в localStorage или sessionStorage.</p>
-            <p>Сайт размещён на GitHub Pages. При посещении этого хостинга GitHub сохраняет IP-адрес посетителя в целях безопасности сервиса. Подробности описаны в <a href="{GITHUB_PRIVACY}" target="_blank" rel="noopener noreferrer">политике конфиденциальности GitHub</a>.</p>
-            <p>Технические журналы хостинга и содержание заявок — разные категории сведений. Поля формы не отправляются в GitHub и не добавляются в адрес страницы.</p>'''),
+            <p>Основной сайт размещён на хостинге Timeweb. Хостинг-провайдер обрабатывает технические данные в соответствии со своей <a href="{HOSTING_PRIVACY}" target="_blank" rel="noopener noreferrer">политикой обработки персональных данных</a>.</p>
+            <p>Технические журналы хостинга и содержание заявок — разные категории сведений. В текущей версии поля формы не отправляются на сервер и не добавляются в адрес страницы.</p>'''),
         ('protection', 'Доступ, передача и защита', '''
             <p>Страницы сайта передаются по HTTPS. До начала приёма заявок оператор должен определить ответственных за доступ к обращениям, место хранения, правила удаления и меры защиты от неправомерного доступа.</p>
             <p>Если для обработки заявок будут привлечены сторонние сервисы, в политике должны быть указаны их роли и условия передачи сведений. До подключения такого сервиса содержание формы не передаётся внешнему обработчику.</p>

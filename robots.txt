@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /palettes.html
+
+Sitemap: https://externlangschool.ru/sitemap.xml

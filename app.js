@@ -203,12 +203,12 @@ form?.querySelector('.clear-selection')?.addEventListener('click', () => {
 const query = new URLSearchParams(window.location.search);
 const paletteFromUrl = query.get('palette');
 const palette = ['black', 'sand', 'navy'].includes(paletteFromUrl) ? paletteFromUrl : 'sand';
-if (['black', 'sand', 'navy'].includes(palette)) {
+if (['black', 'sand', 'navy'].includes(paletteFromUrl)) {
   document.querySelectorAll('a[href]').forEach(link => {
     const href = link.getAttribute('href');
     if (!href || href.startsWith('#')) return;
     const url = new URL(href, window.location.href);
-    if (url.origin === window.location.origin && url.pathname.endsWith('.html')) {
+    if (url.origin === window.location.origin && (url.pathname.endsWith('.html') || url.pathname.endsWith('/'))) {
       url.searchParams.set('palette', palette);
       link.href = url.pathname + url.search + url.hash;
     }
