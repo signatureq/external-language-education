@@ -1,3 +1,133 @@
+// Animation is progressive enhancement: no hidden content if the APIs are absent.
+const siteMotion = (() => {
+  const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const active = new Map();
+  const pending = new Set();
+  const ease = 'cubic-bezier(.22, 1, .36, 1)';
+  let observer;
+
+  function cancel(element) {
+    const entry = active.get(element);
+    if (!entry) return;
+    active.delete(element);
+    entry.animation.cancel();
+  }
+
+  function play(element, frames, options = {}, complete) {
+    if (!element || preference.matches || !element.animate) return null;
+    cancel(element);
+    const animation = element.animate(frames, {duration: 560, easing: ease, fill: 'both', ...options});
+    const entry = {animation, complete};
+    active.set(element, entry);
+    animation.finished.then(() => {
+      if (active.get(element) !== entry) return;
+      active.delete(element);
+      complete?.();
+      animation.cancel();
+    }, () => { if (active.get(element) === entry) active.delete(element); });
+    return animation;
+  }
+
+  function reveal(element, delay = 0) {
+    pending.delete(element);
+    observer?.unobserve(element);
+    element.classList.remove('motion-pending');
+    play(element, [{opacity: 0, transform: 'translateY(20px)'}, {opacity: 1, transform: 'none'}], {delay, duration: 680});
+  }
+
+  function refresh(element, delay = 0) {
+    if (!element) return;
+    pending.delete(element);
+    observer?.unobserve(element);
+    element.classList.remove('motion-pending');
+    play(element, [{opacity: .25, transform: 'translateY(8px)'}, {opacity: 1, transform: 'none'}], {delay, duration: 360});
+  }
+
+  function filterPrograms() {
+    document.querySelectorAll('.language-grid').forEach(grid => {
+      let index = 0;
+      grid.querySelectorAll(':scope > :not([hidden])').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        if (rect.width && rect.bottom > 0 && rect.top < window.innerHeight) refresh(card, index++ * 55);
+      });
+    });
+  }
+
+  function initAccordion(details) {
+    const summary = details.querySelector('summary');
+    let targetOpen = details.open;
+    details.addEventListener('toggle', () => { if (!active.has(details)) targetOpen = details.open; });
+    summary?.addEventListener('click', event => {
+      if (preference.matches || !details.animate) return;
+      event.preventDefault();
+      const start = details.getBoundingClientRect().height;
+      cancel(details);
+      targetOpen = !targetOpen;
+      details.open = targetOpen;
+      const end = details.getBoundingClientRect().height;
+      details.open = true;
+      details.style.overflow = 'hidden';
+      play(details, [{height: `${start}px`}, {height: `${end}px`}], {duration: 320}, () => {
+        details.open = targetOpen;
+        details.style.removeProperty('overflow');
+      });
+    });
+  }
+
+  function init() {
+    document.querySelectorAll('.faq-list details').forEach(initAccordion);
+    if (preference.matches || !('IntersectionObserver' in window) || !Element.prototype.animate) return;
+    observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => { if (entry.isIntersecting && pending.has(entry.target)) reveal(entry.target, Number(entry.target.dataset.motionDelay)); });
+    }, {rootMargin: '0px 0px -24px 0px', threshold: 0});
+    const targets = document.querySelectorAll([
+      '.hero-content > *', '.hero-bottom > p', '.hero-facts > div',
+      '.intro-grid > *', '.section-heading > *', '.feature-heading > *',
+      '.language-filters', '.language-grid > *', '.practice-grid > *',
+      '.rhythm-options > a', '.calculator > div', '.admission-steps > article',
+      '.faq-layout > div', '.contact-grid > *', '.inner-hero-copy > *', '.inner-hero-photo',
+      '.service-heading > *', '.reading-section > *', '.editorial-feature > *',
+      '.program-overview > *', '.age-panels > *', '.levels-panel', '.time-grid > *',
+      '.lesson-flow > *', '.essentials > *', '.related-cta > *',
+      '.legal-hero > *', '.legal-sidebar', '.legal-document', '.footer-grid > *'
+    ].join(','));
+    targets.forEach(element => {
+      // Avoid nesting entrances on both a column and its contents.
+      if (element.parentElement.closest('[data-motion-reveal]')) return;
+      element.dataset.motionReveal = '';
+      const index = Array.from(element.parentElement.children).indexOf(element);
+      const delay = Math.min(index % 4 * 65, 195);
+      element.dataset.motionDelay = String(delay);
+      const rect = element.getBoundingClientRect();
+      if (!rect.width || rect.bottom <= 0) return;
+      if (rect.top < window.innerHeight - 24) reveal(element, delay);
+      else {
+        element.classList.add('motion-pending');
+        pending.add(element);
+        observer.observe(element);
+      }
+    });
+    document.addEventListener('focusin', event => {
+      const element = event.target.closest('[data-motion-reveal]');
+      if (element && pending.has(element)) {
+        pending.delete(element);
+        observer.unobserve(element);
+        element.classList.remove('motion-pending');
+      }
+    });
+  }
+
+  preference.addEventListener('change', event => {
+    if (!event.matches) return;
+    observer?.disconnect();
+    pending.forEach(element => element.classList.remove('motion-pending'));
+    pending.clear();
+    active.forEach(({animation, complete}) => { animation.cancel(); complete?.(); });
+    active.clear();
+  });
+  return {init, refresh, filterPrograms};
+})();
+
 const menuButton = document.querySelector('.menu-toggle');
 const mobileNav = document.querySelector('.mobile-nav');
 function closeMenu(restoreFocus = false) {
@@ -13,6 +143,10 @@ menuButton?.addEventListener('click', () => {
   menuButton.setAttribute('aria-expanded', String(open));
   mobileNav.hidden = !open;
   document.body.classList.toggle('menu-open', open);
+  if (open) {
+    siteMotion.refresh(mobileNav);
+    mobileNav.querySelectorAll('a').forEach((link, index) => siteMotion.refresh(link, index * 25));
+  }
 });
 mobileNav?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => closeMenu()));
 document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(true); });
@@ -69,11 +203,13 @@ document.querySelectorAll('.cadence-controls').forEach(group => {
   buttons.forEach(button => button.addEventListener('click', () => {
     const value = priceValues[button.dataset.cadence];
     if (!value) return;
+    const changed = button.getAttribute('aria-pressed') !== 'true';
     buttons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
     const calculator = group.closest('.calculator');
     calculator.querySelector('[data-price]').textContent = value.price;
     calculator.querySelector('[data-price-period]').textContent = value.period;
     calculator.querySelector('[data-price-description]').textContent = value.description;
+    if (changed) siteMotion.refresh(calculator.querySelector('.price-live'));
     selection.payment = value.selection;
     renderSelection();
   }));
@@ -97,6 +233,8 @@ function updateSchedule(key, updateUrl = true) {
     image.alt = key === 'morning' ? 'Иллюстрация группового занятия' : 'Иллюстрация работы с учебными материалами';
   }
   if (updateUrl) {
+    siteMotion.refresh(heading.closest('.selected-schedule')?.querySelector(':scope > div'));
+    siteMotion.refresh(image?.closest('.photo'), 55);
     const url = new URL(window.location.href);
     url.searchParams.set('time',key);
     window.history.replaceState(null,'',url.pathname + url.search + url.hash);
@@ -125,9 +263,11 @@ if (legalContents) {
 
 // The language tabs filter programs; they do not assess the visitor.
 document.querySelectorAll('.filter-button[data-filter]').forEach(button => button.addEventListener('click', () => {
+  const changed = button.getAttribute('aria-pressed') !== 'true';
   document.querySelectorAll('.filter-button[data-filter]').forEach(item => item.setAttribute('aria-pressed',String(item===button)));
   document.querySelectorAll('[data-region]').forEach(card => { card.hidden = button.dataset.filter !== 'all' && card.dataset.region !== button.dataset.filter; });
   document.querySelectorAll('.language-grid').forEach(grid => { grid.dataset.activeFilter = button.dataset.filter; });
+  if (changed) siteMotion.filterPrograms();
 }));
 const pageLinks = Array.from(document.querySelectorAll('.page-nav a'));
 if (pageLinks.length && 'IntersectionObserver' in window) {
@@ -137,3 +277,5 @@ if (pageLinks.length && 'IntersectionObserver' in window) {
   },{rootMargin:'-150px 0px -55% 0px',threshold:0});
   pageLinks.forEach(link => { const section=document.getElementById(link.hash.slice(1)); if(section)observer.observe(section); });
 }
+
+siteMotion.init();

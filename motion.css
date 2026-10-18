@@ -1,0 +1,60 @@
+/* Short, one-time entrances; interaction feedback stays close to the content. */
+:root { --motion-ease: cubic-bezier(.22, 1, .36, 1); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-pending { opacity: 0; }
+
+  :is(.button, .header-contact, .filter-button, .cadence-button, .schedule-choice) {
+    transition: background-color .28s ease, border-color .28s ease, color .28s ease,
+      transform .35s var(--motion-ease), box-shadow .35s ease;
+  }
+  :is(.text-link, .card-link, .time-link, .rhythm-options > a, .header-contact, .button) svg {
+    transition: transform .4s var(--motion-ease);
+  }
+  :is(.language-card, .language-choice, .time-card, .rhythm-options > a) {
+    transition: transform .45s var(--motion-ease), border-color .3s ease, box-shadow .45s ease;
+  }
+  :is(.language-image, .time-card) img { transition: transform .9s var(--motion-ease); }
+  .faq-list summary svg { transition: transform .35s var(--motion-ease); }
+  .menu-toggle svg { transition: transform .35s var(--motion-ease); }
+  .menu-toggle[aria-expanded="true"] svg { transform: rotate(90deg); }
+  .button:disabled svg { transform: none; }
+
+  .desktop-nav a { position: relative; }
+  .desktop-nav a::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 -6px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .35s var(--motion-ease);
+  }
+  .desktop-nav a:is(:hover, :focus-visible, [aria-current="page"])::after { transform: scaleX(1); }
+
+  @media (hover: hover) and (pointer: fine) {
+    :is(.language-card, .language-choice, .time-card, .rhythm-options > a):hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 26px rgb(0 0 0 / .09);
+    }
+    :is(.language-card, .language-choice, .time-card):hover img { transform: scale(1.04); }
+    :is(.text-link, .card-link, .time-link, .rhythm-options > a, .header-contact, .button):hover svg {
+      transform: translateX(4px);
+    }
+  }
+  :is(.button, .filter-button, .cadence-button, .schedule-choice):not(:disabled):active {
+    transform: translateY(1px) scale(.985);
+  }
+}
+
+/* Content is always visible without JavaScript and with reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .motion-pending { opacity: 1; }
+  :is(.language-card, .language-choice, .time-card, .rhythm-options > a, .button):hover,
+  :is(.language-card, .language-choice, .time-card):hover img { transform: none; }
+}
+@media print {
+  .motion-pending { opacity: 1 !important; }
+}
