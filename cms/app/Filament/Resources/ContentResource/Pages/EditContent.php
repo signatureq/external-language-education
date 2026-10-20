@@ -32,7 +32,7 @@ abstract class EditContent extends EditRecord
                     return;
                 }
                 $this->refreshFormData(['draft', 'version']);
-                Notification::make()->title('Изменения опубликованы')->body('Посетители уже видят новую версию.')->success()->send();
+                Notification::make()->title('Изменения опубликованы')->body(config('publishing.separate_domain') ? 'Основной сайт обновится примерно за 15 секунд. Обновите открытую страницу, чтобы увидеть правки.' : 'Посетители уже видят новую версию.')->success()->send();
             }),
             Action::make('history')->label('История')->icon('heroicon-o-clock')->color('gray')->visible(fn () => $this->record->revisions()->exists())->schema([
                 Select::make('revision')->label('Версия для восстановления')->options(fn () => $this->record->revisions()->limit(30)->get()->mapWithKeys(fn ($r) => [$r->id => $r->created_at->format('d.m.Y H:i').' — '.$r->author]))->required()->helperText('Предыдущая опубликованная версия вернётся в черновик. Текущий сайт сохранится до публикации.'),

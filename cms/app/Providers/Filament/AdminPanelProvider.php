@@ -40,7 +40,7 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->unsavedChangesAlerts()
             ->renderHook('panels::head.end', fn () => view('filament.admin-head'))
-            ->userMenuItems([Action::make('website')->label('Открыть сайт')->icon('heroicon-o-arrow-top-right-on-square')->url(url('/'))->openUrlInNewTab()])
+            ->userMenuItems([Action::make('website')->label('Открыть сайт')->icon('heroicon-o-arrow-top-right-on-square')->url(config('publishing.site_url'))->openUrlInNewTab()])
             ->colors([
                 'primary' => Color::Orange,
             ])

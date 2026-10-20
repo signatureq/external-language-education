@@ -68,4 +68,4 @@ def write_discovery(root, pages):
         node = SubElement(sitemap, 'url')
         SubElement(node, 'loc').text = site_url(filename)
     (root / 'sitemap.xml').write_bytes(b'<?xml version="1.0" encoding="UTF-8"?>\n' + tostring(sitemap, encoding='utf-8') + b'\n')
-    (root / 'robots.txt').write_text('User-agent: *\nAllow: /\nDisallow: /palettes.html\n\nSitemap: ' + SITE_ORIGIN + '/sitemap.xml\n', encoding='utf-8')
+    (root / 'robots.txt').write_text('User-agent: *\nAllow: /\nDisallow: /palettes.html\nDisallow: /cms-publishing/\nDisallow: /cms-cache/\nDisallow: /cms-site.php\n\nSitemap: ' + SITE_ORIGIN + '/sitemap.xml\n', encoding='utf-8')

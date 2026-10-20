@@ -1,0 +1,3 @@
+# After the existing www/index canonical redirects, inside mod_rewrite:
+RewriteRule ^$ cms-site.php [L]
+RewriteRule ^(?:admission|chinese|consent|english|format|french|german|index|interview|italian|korean|languages|privacy|schedule|spanish|tuition)\.html$ cms-site.php [L]

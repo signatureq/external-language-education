@@ -86,7 +86,12 @@ class SitePublisher
             $html = preg_replace('~src="app\.js(?:\?[^"]*)?"~', 'src="app.js?v='.substr(hash_file('sha256', public_path('app.js')), 0, 10).'"', $html);
         }
 
-        return str_replace('</head>', '<script>window.schoolSettings='.$config.';</script></head>', $html);
+        $html = str_replace('</head>', '<script>window.schoolSettings='.$config.';</script></head>', $html);
+        if ($mediaUrl = config('publishing.media_url')) {
+            $html = preg_replace_callback('~(?<![a-zA-Z0-9/:])uploads/images/[a-f0-9]{40}\.webp~', fn ($m) => rtrim($mediaUrl, '/').'/'.$m[0], $html);
+        }
+
+        return $html;
     }
 
     private function fill(string $template, array $data): string
@@ -125,7 +130,7 @@ class SitePublisher
                         }
                         $staged[$page->key] = $this->render($page, $doc);
                     }
-                    foreach ($staged as $file => $html) {
+                    foreach (config('publishing.separate_domain') ? [] : $staged as $file => $html) {
                         $target = public_path($file);
                         if (is_file($target)) {
                             File::copy($target, $backup.'/'.$file);

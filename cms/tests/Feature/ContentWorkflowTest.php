@@ -152,6 +152,7 @@ class ContentWorkflowTest extends TestCase
 
     public function test_admin_and_preview_require_authenticated_administrator(): void
     {
+        $this->get('/admin/login')->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow');
         $this->get('/admin/pages')->assertRedirect('/admin/login');
         $this->get('/admin/preview/'.$this->page()->id)->assertRedirect('/admin/login');
         $this->actingAs(User::factory()->create())->get('/admin/pages')->assertForbidden();
@@ -204,5 +205,53 @@ class ContentWorkflowTest extends TestCase
         $token = str_repeat('b', 64);
         config(['cms.setup_hash' => hash('sha256', $token), 'cms.setup_expires' => now()->subMinute()->toIso8601String()]);
         $this->get('/admin/setup/'.$token)->assertNotFound();
+    }
+
+    public function test_public_feed_exposes_only_signed_published_pages_and_updates_after_publication(): void
+    {
+        $key = openssl_pkey_new(['private_key_bits' => 2048]);
+        openssl_pkey_export($key, $pem);
+        $public = openssl_pkey_get_details($key)['key'];
+        File::put($this->output.'/test-private.pem', $pem);
+        config(['publishing.private_key' => $this->output.'/test-private.pem', 'publishing.media_url' => 'https://cms.example.test']);
+        $page = $this->page();
+        $draft = $page->draft;
+        $draft['seo_title'] = 'Only after explicit publication';
+        $media = app(MediaUploader::class)->store(UploadedFile::fake()->image('class.jpg', 400, 300), 'New class');
+        foreach ($page->schema as $group) {
+            foreach ($group['fields'] as $field) {
+                if ($field['type'] === 'image') {
+                    $draft[$field['key']] = $media->path;
+                    break 2;
+                }
+            }
+        }
+        $page = app(ContentEditor::class)->save($page, $draft, $page->version);
+        $response = $this->get('/published-site')->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+        $envelope = $response->json();
+        $this->assertSame(1, openssl_verify(base64_decode($envelope['payload']), base64_decode($envelope['signature']), $public, OPENSSL_ALGO_SHA256));
+        $first = json_decode(base64_decode($envelope['payload']), true);
+        $this->assertCount(16, $first['pages']);
+        $this->assertStringNotContainsString('Only after explicit publication', $first['pages']['index.html']);
+        $this->assertStringNotContainsString($media->path, $first['pages']['index.html']);
+        app(SitePublisher::class)->publish($page, $page->version, 'Editor');
+        $second = $this->get('/published-site')->assertOk()->json();
+        $published = json_decode(base64_decode($second['payload']), true);
+        $this->assertStringContainsString('Only after explicit publication', $published['pages']['index.html']);
+        $this->assertStringContainsString('https://cms.example.test/'.$media->path, $published['pages']['index.html']);
+    }
+
+    public function test_separate_admin_domain_publishes_data_without_recreating_a_public_homepage(): void
+    {
+        config(['publishing.separate_domain' => true]);
+        $page = $this->page();
+        $draft = $page->draft;
+        $draft['seo_title'] = 'Separate domain publication';
+        $page = app(ContentEditor::class)->save($page, $draft, $page->version);
+        app(SitePublisher::class)->publish($page, $page->version, 'Editor');
+        $this->assertFalse($page->fresh()->hasDraft());
+        $this->assertFileDoesNotExist($this->output.'/index.html');
+        $this->get('/')->assertRedirect('/admin');
+        $this->actingAs($this->admin())->get('/admin/preview/'.$page->id)->assertOk()->assertSee('<base href="https://externlangschool.ru/">', false);
     }
 }

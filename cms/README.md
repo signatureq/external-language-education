@@ -1,6 +1,6 @@
 # Управление сайтом External
 
-Laravel 12 + Filament 5. Панель открывается по `/admin`, содержание и база хранятся вне публичной папки. Публичный сайт остаётся набором готовых HTML-страниц: его оформление, URL, фотографии и метаданные сохранены.
+Laravel 12 + Filament 5. Рабочая панель: `https://cw704626.tw1.ru/admin`. Содержание, база и ключ подписи хранятся вне публичной папки. Основной сайт `https://externlangschool.ru/` получает опубликованные HTML-страницы через HTTPS; оформление, URL, фотографии и метаданные сохранены.
 
 ## Что редактируется
 
@@ -17,7 +17,7 @@ Laravel 12 + Filament 5. Панель открывается по `/admin`, со
 
 ## Локальный запуск
 
-Требуется PHP 8.2+, Composer и расширения `pdo_sqlite`, `mbstring`, `intl`, `dom`, `fileinfo`, `gd`, `openssl`. Зависимости зафиксированы под PHP 8.2.29. Node для стандартного интерфейса Filament не нужен.
+Требуется PHP 8.2+, Composer и расширения `pdo_sqlite`, `mbstring`, `intl`, `dom`, `fileinfo`, `gd`, `openssl`; для получения публикаций основному сайту нужен `curl`. Зависимости зафиксированы под PHP 8.2.29. Node для стандартного интерфейса Filament не нужен.
 
 ```sh
 cd cms
@@ -42,6 +42,51 @@ php artisan site:build
 
 ## Timeweb
 
+### Два отдельных домена — текущая рабочая схема
+
+Основной домен остаётся на основном проекте (`~/public_html`), админка — на техническом домене и проекте `external`. DNS и регистрация основного домена остаются в Beget. Привязывать основной домен к `external` не требуется. Изоляция обоих проектов включена; постоянный SSH для работы панели не нужен.
+
+`/published-site` отдаёт только опубликованные страницы в подписанном JSON-пакете. Черновики, аккаунты, схема редактора и приватные настройки в него не входят. RSA-подпись SHA-256 создаётся приватным ключом CMS. Основному сайту передаётся только открытый ключ. На основном сайте нет HTTP-метода записи файлов и нет пароля хостинга.
+
+`deploy/main-site/PublishedSiteGateway.php` проверяет TLS, подпись, домен, список 16 страниц, размер и время пакета. Он обновляет общую локальную копию максимум раз в 15 секунд и продолжает отдавать последнюю проверенную версию при сбое CMS. Если копии ещё нет, используются исходные HTML из `public_html/cms-publishing/fallback`. Загруженные фотографии имеют неизменяемые случайные имена и отдаются с домена CMS.
+
+На Timeweb существующие `.html` могут отдаваться Nginx в обход правил Apache. Поэтому исходные 16 файлов и старый `index.htm` перенесены в резервную папку, а в корне работает PHP-обработчик. Нельзя возвращать статическую сборку в этот корень: она снова обойдёт публикацию из CMS.
+
+```text
+public_html/
+  index.php, cms-site.php, .htaccess
+  cms-publishing/        обработчик, открытый ключ и исходные HTML/fallback
+  cms-cache/             последняя проверенная публикация; не источник содержания
+  assets/, CSS, JS, favicon, robots.txt, sitemap.xml
+external/
+  ele-cms/               Laravel, .env, SQLite, storage, приватный ключ
+  public_html/           вход в админку, ресурсы Filament и uploads
+```
+
+Настройки CMS: `APP_URL=https://cw704626.tw1.ru`, `CMS_SEPARATE_DOMAIN=true`, `CMS_SITE_URL=https://externlangschool.ru`, `CMS_MEDIA_URL=https://cw704626.tw1.ru`. Приватный ключ — `storage/app/private/publishing-private.pem`, права 0600. Создать его один раз, не заменяя рабочий:
+
+```sh
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out storage/app/private/publishing-private.pem
+chmod 600 storage/app/private/publishing-private.pem
+openssl pkey -in storage/app/private/publishing-private.pem -pubout
+```
+
+Открытый ключ вставляется в `public_html/cms-publishing/config.php` по образцу `deploy/main-site/config.example.php`. Туда же копируются шлюз и PHP-обработчик. Правила из `rewrite-rules.txt` добавляются после существующих канонических перенаправлений. `DirectoryIndex` должен указывать на `index.php`.
+
+`deploy/connect-domains.php` копируется в приватный корень Laravel как `connect-domains.php`. После подготовки обработчиков он проверяет реальный HTTPS-пакет и его подпись, переносит исходные HTML, сохраняет конфигурацию и настраивает домены в `.env`:
+
+```sh
+/opt/php82/bin/php external/ele-cms/connect-domains.php /home/c/cw704626/public_html
+/opt/php82/bin/php external/ele-cms/artisan config:clear
+/opt/php82/bin/php external/ele-cms/artisan site:setup-link
+```
+
+Перед запуском нужен корректный открытый ключ и существующие исходные страницы; перенос сначала проверяют на копии. Приватная резервная копия находится в `storage/app/private/domain-connection-*`. Для возврата к статической схеме восстановить HTML из `cms-publishing/fallback` и прежний `.htaccess` с `DirectoryIndex index.html`. Удалять приватную CMS или базу для отката не требуется.
+
+Проверка передачи: запрос страницы основного сайта возвращает `X-External-Source: signed`; хеш `X-External-Publication` соответствует её опубликованному HTML. Вход в админку и предпросмотр закрыты от индексации. Основные `robots.txt`, favicon и sitemap обслуживаются основным доменом.
+
+### Первичная установка Laravel
+
 Структура аккаунта:
 
 ```text
@@ -56,7 +101,7 @@ external/
 python3 cms/deploy/package.py /tmp/ele-cms-production.zip
 ```
 
-В Timeweb сначала создайте сайт с директорией `external`, чтобы приватный Laravel и `public_html` находились внутри одного корня изоляции. Загрузите и распакуйте архив внутри `external`. Не отключайте «Изолировать сайт»: размещение приватных файлов рядом с основным `~/public_html` блокируется изоляцией Timeweb. После распаковки выполните из приватной `external/ele-cms` подходящим PHP CLI:
+В Timeweb сначала создайте сайт с директорией `external`, чтобы приватный Laravel и `public_html` находились внутри одного корня изоляции. Загрузите и распакуйте архив внутри `external`. Размещение приватных файлов рядом с основным `~/public_html` блокируется изоляцией Timeweb. После распаковки выполните из приватной `external/ele-cms` подходящим PHP CLI:
 
 ```sh
 /opt/php82/bin/php install.php

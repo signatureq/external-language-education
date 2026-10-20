@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /palettes.html
+Disallow: /cms-publishing/
+Disallow: /cms-cache/
+Disallow: /cms-site.php
 
 Sitemap: https://externlangschool.ru/sitemap.xml

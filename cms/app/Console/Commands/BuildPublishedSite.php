@@ -22,7 +22,7 @@ class BuildPublishedSite extends Command
             foreach ($pages as $page) {
                 $output[$page->key] = $publisher->render($page);
             }
-            foreach ($output as $file => $html) {
+            foreach (config('publishing.separate_domain') ? [] : $output as $file => $html) {
                 File::put(public_path($file.'.cms-tmp'), $html);
                 chmod(public_path($file.'.cms-tmp'), 0644);
                 rename(public_path($file.'.cms-tmp'), public_path($file));
