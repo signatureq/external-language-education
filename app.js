@@ -312,6 +312,7 @@ function initApplications() {
   notice.setAttribute('aria-live', 'polite');
   const trap = document.createElement('div');
   trap.className = 'application-trap';
+  trap.hidden = true;
   trap.setAttribute('aria-hidden', 'true');
   trap.innerHTML = '<label for="application-website">Ваш сайт</label><input id="application-website" name="website" tabindex="-1" autocomplete="off">';
   form.append(trap);
