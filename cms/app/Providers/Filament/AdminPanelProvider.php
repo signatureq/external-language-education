@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('External · управление сайтом')
             ->favicon(asset('favicon.png'))
             ->globalSearch(false)
-            ->navigationGroups(['Содержание сайта', 'Школа', 'Помощь'])
+            ->navigationGroups(['Обращения', 'Содержание сайта', 'Школа', 'Помощь'])
             ->homeUrl(fn () => PageResource::getUrl())
             ->darkMode(isForced: true)
             ->defaultThemeMode(ThemeMode::Dark)

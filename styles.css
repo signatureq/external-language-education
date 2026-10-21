@@ -132,3 +132,7 @@ html{scroll-padding-top:170px}
 .graphite-section :is(.filter-button,.schedule-choice,.button-outline){border-color:var(--control-line)}
 .graphite-section+.related-cta{margin-top:40px}
 @media(max-width:560px){.graphite-section+.related-cta{margin-top:28px}}
+/* Application delivery states reuse the approved public form design. */
+.application-trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+.application-form .form-availability[data-error]{color:#a32638}
+.application-form .field input,.application-form .field select,.application-form .field textarea{font-size:16px}

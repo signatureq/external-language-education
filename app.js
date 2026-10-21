@@ -295,11 +295,121 @@ document.querySelector('[data-select-time]')?.addEventListener('click', event =>
   if (value) { selection.time = value.selection; renderSelection(); }
 });
 
-// Applications are not collected until an actual delivery channel is configured.
-form?.addEventListener('submit', event => {
-  event.preventDefault();
-  form.querySelector('.form-availability')?.focus({preventScroll:true});
-});
+// The server publishes the endpoint only after delivery and private storage are configured.
+function initApplications() {
+  if (!form) return;
+  const endpoint = window.schoolSettings?.applicationUrl;
+  const fields = form.querySelector('.application-inputs');
+  const submit = form.querySelector('button[type="submit"]');
+  const notice = form.querySelector('.form-availability');
+  if (!endpoint || !fields || !submit || !notice) return;
+  const api = new URL(endpoint, window.location.href);
+  if (api.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(api.hostname)) return;
+  fields.disabled = false;
+  submit.disabled = false;
+  submit.querySelector('span').textContent = 'Отправить заявку';
+  notice.textContent = 'Оставьте контакты — мы свяжемся с вами и ответим на вопросы';
+  notice.setAttribute('aria-live', 'polite');
+  const trap = document.createElement('div');
+  trap.className = 'application-trap';
+  trap.setAttribute('aria-hidden', 'true');
+  trap.innerHTML = '<label for="application-website">Ваш сайт</label><input id="application-website" name="website" tabindex="-1" autocomplete="off">';
+  form.append(trap);
+  let token;
+  let sending = false;
+  let completed = false;
+
+  function clearErrors() {
+    form.querySelectorAll('.form-error').forEach(error => error.remove());
+    fields.querySelectorAll('[aria-invalid]').forEach(input => {
+      input.removeAttribute('aria-invalid');
+      input.removeAttribute('aria-describedby');
+    });
+  }
+
+  function showErrors(errors) {
+    let first;
+    Object.entries(errors).forEach(([name, message]) => {
+      const input = form.elements.namedItem(name);
+      if (!input || !['name', 'phone', 'language', 'comment', 'consent'].includes(name)) return;
+      input.setAttribute('aria-invalid', 'true');
+      const error = document.createElement('p');
+      error.className = 'form-error';
+      error.id = `application-error-${name}`;
+      error.textContent = Array.isArray(message) ? message[0] : message;
+      input.setAttribute('aria-describedby', error.id);
+      input.closest('.field, .consent-field').append(error);
+      first ||= input;
+    });
+    first?.focus();
+  }
+
+  async function request(url, options = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    try {
+      const response = await fetch(url, {...options, credentials: 'omit', cache: 'no-store', signal: controller.signal, headers: {Accept: 'application/json', ...options.headers}});
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw Object.assign(new Error('Request failed'), {status: response.status, data});
+      return data;
+    } finally { clearTimeout(timeout); }
+  }
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (sending || completed) return;
+    clearErrors();
+    const values = new FormData(form);
+    const errors = {};
+    if (!String(values.get('name') || '').trim()) errors.name = 'Напишите, как вас зовут';
+    const phone = String(values.get('phone') || '').trim();
+    const digits = phone.replace(/\D/g, '');
+    if (!/^\+?[0-9 ()-]+$/.test(phone) || digits.length < 10 || digits.length > 15) errors.phone = 'Проверьте номер телефона с кодом страны';
+    if (!values.get('language')) errors.language = 'Выберите язык или «Помогите выбрать»';
+    if (!values.get('consent')) errors.consent = 'Нужно ваше согласие на обработку данных для ответа на обращение';
+    if (Object.keys(errors).length) { showErrors(errors); return; }
+    sending = true;
+    submit.disabled = true;
+    submit.querySelector('span').textContent = 'Отправляем…';
+    form.setAttribute('aria-busy', 'true');
+    notice.textContent = 'Принимаем заявку, пожалуйста, подождите';
+    notice.removeAttribute('data-error');
+    try {
+      token ||= (await request(`${api.href}/token`)).token;
+      if (!token) throw new Error('Token missing');
+      const result = await request(api.href, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({token, name: String(values.get('name')).trim(), phone, language: values.get('language'),
+          comment: String(values.get('comment') || '').trim(), consent: values.get('consent'),
+          website: values.get('website') || '', preferences: Object.values(selection).filter(Boolean).join(' · '),
+          page: new URL(document.querySelector('link[rel="canonical"]')?.href || window.location.href).pathname}),
+      });
+      if (!result.accepted) throw new Error('Application not accepted');
+      completed = true;
+      fields.disabled = true;
+      submit.querySelector('span').textContent = 'Заявка принята';
+      notice.textContent = 'Спасибо! Ваша заявка принята. Мы свяжемся с вами по указанному телефону';
+      notice.focus({preventScroll: true});
+    } catch (error) {
+      if (error.status === 422) showErrors(error.data.errors || {});
+      if (error.status === 419) token = null;
+      notice.textContent = error.status === 429 ? 'Слишком много попыток. Подождите минуту и попробуйте ещё раз' :
+        error.status === 422 ? 'Проверьте выделенные поля и отправьте заявку ещё раз' :
+        error.status === 419 ? 'Форма обновилась. Нажмите «Отправить заявку» ещё раз' :
+        'Не удалось получить подтверждение. Данные остались в форме — попробуйте отправить ещё раз';
+      notice.setAttribute('data-error', 'true');
+      if (error.status !== 422) notice.focus({preventScroll: true});
+    } finally {
+      sending = false;
+      form.removeAttribute('aria-busy');
+      if (!completed) {
+        submit.disabled = false;
+        submit.querySelector('span').textContent = 'Отправить заявку';
+      }
+    }
+  });
+}
+initApplications();
 
 const legalContents = document.querySelector('.legal-toc');
 if (legalContents) {

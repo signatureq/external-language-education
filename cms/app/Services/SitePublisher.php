@@ -81,7 +81,7 @@ class SitePublisher
             return '<script type="application/ld+json">'.json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP).'</script>';
         }, $html);
         preg_match('~<img[^>]+data-schedule-image[^>]+src="([^"]+)"~', $html, $scheduleImage);
-        $config = json_encode(['morningPhoto' => $scheduleImage[1] ?? 'assets/photos/blue/group-practice.jpg', 'rate' => $price, 'morning' => $settings['morning'], 'evening' => $settings['evening']], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+        $config = json_encode(['morningPhoto' => $scheduleImage[1] ?? 'assets/photos/blue/group-practice.jpg', 'rate' => $price, 'morning' => $settings['morning'], 'evening' => $settings['evening'], 'applicationUrl' => config('applications.enabled') ? config('applications.endpoint') : null], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
         if (is_file(public_path('app.js'))) {
             $html = preg_replace('~src="app\.js(?:\?[^"]*)?"~', 'src="app.js?v='.substr(hash_file('sha256', public_path('app.js')), 0, 10).'"', $html);
         }

@@ -10,7 +10,7 @@ class AdminHeaders
     public function handle(Request $request, Closure $next)
     {
         $response = $next($request);
-        if ($request->is('admin', 'admin/*', 'livewire/*')) {
+        if ($request->is('admin', 'admin/*', 'livewire/*', 'api/applications', 'api/applications/*')) {
             $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
             $response->headers->set('Cache-Control', 'private, no-store');
             $response->headers->set('Referrer-Policy', 'same-origin');

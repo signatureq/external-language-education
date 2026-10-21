@@ -1,6 +1,8 @@
 """Legal information pages, with operator details supplied separately."""
 from html import escape
 from datetime import date
+from pathlib import Path
+import json
 from site_config import site_url
 
 LAW = 'https://www.consultant.ru/document/cons_doc_LAW_61801/'
@@ -88,6 +90,16 @@ def legal_pages(settings):
             <p>Подробности о работе с данными, технических сведениях хостинга, правах посетителя и обновлениях документов приведены в <a href="privacy.html">политике обработки персональных данных</a>.</p>
             <p>Согласие на обработку обращения не заменяет договор на обучение и не создаёт обязанности оплатить курс.</p>'''),
     ]
+    # Match the deployed form's actual storage/delivery, without inventing operator details.
+    replacements = json.loads((Path(__file__).parent / 'cms/deploy/application-copy.json').read_text())
+    def current_copy(sections):
+        result = []
+        for ident, heading, body in sections:
+            for before, after in replacements.items():
+                body = body.replace(before, after)
+            result.append((ident, heading, body))
+        return result
+    policy, consent = current_copy(policy), current_copy(consent)
     return {
         'privacy.html': {
             'title': 'Политика обработки персональных данных',
