@@ -26,6 +26,6 @@ with zipfile.ZipFile(args.output,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as ar
     archive.write(root/'app.js','public_html/app.js')
     archive.write(cms/'deploy/install.php','ele-cms/install.php')
     archive.write(cms/'deploy/connect-domains.php','ele-cms/connect-domains.php')
-    for helper in ['enable-applications.php','update-application-copy.php','application-copy.json']:
+    for helper in ['enable-applications.php','configure-smtp.php','update-application-copy.php','application-copy.json']:
         archive.write(cms/'deploy'/helper,'ele-cms/'+helper)
 print(f'{args.output}: {args.output.stat().st_size/1024/1024:.1f} MB')
